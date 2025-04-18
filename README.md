@@ -1,16 +1,44 @@
-# travelcompanion
+# Travel Companion
 
-A new Flutter project.
+Приложение для путешественников, созданное с использованием Flutter и Supabase.
 
-## Getting Started
+## Функциональность
 
-This project is a starting point for a Flutter application.
+- Регистрация и авторизация пользователей
+- Управление профилем пользователя
+- Загрузка фотографий профиля
+- Хранение предпочтений пользователя
 
-A few resources to get you started if this is your first Flutter project:
+## Технологии
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter
+- Supabase
+- Riverpod для управления состоянием
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Установка
+
+1. Клонируйте репозиторий:
+```bash
+git clone https://github.com/your-username/travelcompanion.git
+```
+
+2. Установите зависимости:
+```bash
+flutter pub get
+```
+
+3. Запустите приложение:
+```bash
+flutter run
+```
+
+## Конфигурация
+
+Для работы приложения необходимо настроить Supabase:
+1. Создайте проект в Supabase
+2. Скопируйте URL и anon key в `main.dart`
+3. Настройте политики доступа в Supabase
+
+## Лицензия
+
+MIT
