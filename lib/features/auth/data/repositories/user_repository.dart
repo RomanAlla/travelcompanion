@@ -45,20 +45,20 @@ class SupabaseUserRepository implements UserRepository {
     try {
       final currentUser = _supabase.auth.currentUser;
       if (currentUser == null) {
-        return null;
+        throw 'Пользователь не авторизован';
       }
 
       final userData = user.toJson();
 
       final response = await _supabase
           .from('users')
-          .update(userData)
-          .eq('id', currentUser.id)
+          .upsert(userData, onConflict: 'id')
           .select()
           .single();
 
       return UserModel.fromJson(response);
     } catch (e) {
+      print('Error updating user: $e');
       rethrow;
     }
   }

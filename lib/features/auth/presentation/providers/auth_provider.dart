@@ -71,7 +71,8 @@ class AuthNotifier extends StateNotifier<AuthNotifierState> {
   Future<void> signUp(String email, String password) async {
     try {
       state = state.copyWith(isLoading: true);
-      final user = await _authService.signUp(email, password);
+      final user = await _authService.signUp(
+          email: email, password: password, name: email.split('@')[0]);
 
       state = state.copyWith(
         isLoading: false,

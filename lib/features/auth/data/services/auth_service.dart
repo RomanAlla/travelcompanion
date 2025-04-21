@@ -10,26 +10,30 @@ class AuthService {
 
   AuthService(this._authRepository, this._userRepository);
 
-  Future<UserModel?> signUp(String email, String password) async {
+  Future<UserModel?> signUp({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
     try {
       final authResponse = await _authRepository.signUp(email, password);
 
       if (authResponse.user == null) {
-        throw 'Ошибка при создании пользователя';
+        throw 'Ошибка при регистрации пользователя';
       }
 
       final user = UserModel(
         id: authResponse.user!.id,
-        email: authResponse.user!.email!,
+        email: email,
+        name: name,
         createdAt: DateTime.now(),
       );
 
       try {
         final userResponse = await _userRepository.updateUser(user);
-
+        await _userRepository.getCurrentUser();
         return userResponse;
       } catch (e) {
-        await _authRepository.signOut();
         throw 'Ошибка при создании профиля пользователя: $e';
       }
     } catch (e) {
