@@ -1,57 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:travelcompanion/features/auth/presentation/providers/auth_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+import 'package:travelcompanion/features/home/presentation/widgets/categories_bar_widget.dart';
+import 'package:travelcompanion/features/home/presentation/widgets/route_card_widget.dart';
+import 'package:travelcompanion/features/home/presentation/widgets/seatch_bar_widget.dart';
+import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';
+
+class RoutesScreen extends ConsumerStatefulWidget {
+  const RoutesScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+  ConsumerState<RoutesScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends ConsumerState<RoutesScreen> {
+  int selectedCategory = 0;
+  int currentNavIndex = 0;
+  String pickedCategory = 'Тропики';
+
+  final List<Map<String, dynamic>> categories = [
+    {'icon': Icons.beach_access, 'label': 'Тропики'},
+    {'icon': Icons.rocket, 'label': 'Острова'},
+    {'icon': Icons.dangerous, 'label': 'Пещеры'},
+    {'icon': Icons.local_fire_department, 'label': 'Популярные'},
+    {'icon': Icons.nature, 'label': 'Особые'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final routes = ref.watch(routesListProvider);
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Travel Companion'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => context.push('/profile'),
+      backgroundColor: Colors.grey[50],
+      body: Column(
+        children: [
+          SizedBox(
+            height: 40,
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              try {
-                await ref.read(authProvider.notifier).signOut();
-                if (context.mounted) {
-                  context.go('/sign-in');
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Ошибка при выходе: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
+          SearchBarWidget(),
+          SizedBox(
+            height: 5,
+          ),
+          CategoriesBar(
+            categories: categories,
+            selected: selectedCategory,
+            onSelect: (i) {
+              setState(() {
+                selectedCategory = i;
+                pickedCategory = categories[i]['label'];
+              });
             },
           ),
+          SizedBox(
+            height: 5,
+          ),
+          Expanded(
+              child: routes.when(
+            data: (routesList) {
+              var filteredRoutes = routesList.where((route) {
+                return route.routeType == pickedCategory;
+              }).toList();
+
+              if (filteredRoutes.isEmpty) {
+                return const Center(
+                  child: Text('Нет доступных маршрутов'),
+                );
+              }
+              return ListView.builder(
+                padding: EdgeInsets.zero,
+                itemCount: filteredRoutes.length,
+                itemBuilder: (context, index) {
+                  final route = filteredRoutes[index];
+                  return RouteCard(
+                    route: route,
+                  );
+                },
+              );
+            },
+            error: (error, _) => Center(
+              child: Text('Ошибка: $error'),
+            ),
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          )),
         ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-                'Добро пожаловать, ${authState.user?.name ?? authState.user?.email ?? 'Пользователь'}!'),
-            const SizedBox(height: 20),
-            const Text('Это главный экран приложения'),
-          ],
-        ),
       ),
     );
   }

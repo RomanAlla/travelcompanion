@@ -45,7 +45,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           return;
         }
 
-        context.go('/home');
+        context.go('/nav-screen');
       } catch (e) {
         if (mounted) {
           setState(() {

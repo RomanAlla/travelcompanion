@@ -8,15 +8,14 @@ void main() async {
     WidgetsFlutterBinding.ensureInitialized();
 
     await Supabase.initialize(
-      url: 'https://gzkkyvpbcadxttyleyxq.supabase.co',
+      url: 'https://dvwkdpswmesccgonqroo.supabase.co',
       anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd6a2t5dnBiY2FkeHR0eWxleXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM4NDkzMzIsImV4cCI6MjA1OTQyNTMzMn0.hWOizIjvGCkXJ6DtBltRBnXi11vSBs4ACwz_vPVRkRQ',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR2d2tkcHN3bWVzY2Nnb25xcm9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzU0ODgsImV4cCI6MjA2MTY1MTQ4OH0.5BIuF1le3bSnI61Fjkj-w_DCqtpIlh8wHbWIwn_anSk',
     );
 
     runApp(const ProviderScope(child: AuthWrapper()));
   } catch (e) {
     rethrow;
-    
   }
 }
 

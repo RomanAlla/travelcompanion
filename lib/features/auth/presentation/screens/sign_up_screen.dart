@@ -65,11 +65,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             );
 
         if (mounted && ref.read(authProvider).user != null) {
-          context.go('/home');
+          context.go('/nav-screen');
         }
       } catch (e) {
         if (mounted) {
           setState(() {
+            print(e.toString());
             _error = e.toString();
           });
         }
