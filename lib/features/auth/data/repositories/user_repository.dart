@@ -48,9 +48,17 @@ class SupabaseUserRepository implements UserRepository {
         throw 'Пользователь не авторизован';
       }
 
-      final userData =
-          UserModel(id: user.id, email: user.email, createdAt: DateTime.now());
-  
+      final userData = UserModel(
+        id: user.id,
+        email: user.email,
+        languages: user.languages,
+        avatarUrl: user.avatarUrl,
+        preferences: user.preferences,
+        country: user.country,
+        name: user.name,
+        createdAt: DateTime.now(),
+      );
+
       final response = await _supabase
           .from('users')
           .upsert(userData, onConflict: 'id')

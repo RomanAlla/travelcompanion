@@ -1,13 +1,13 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:travelcompanion/features/details_route/presentation/details_route_screen.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:travelcompanion/features/details_route/presentation/myshi.dart';
 import 'package:travelcompanion/features/routes/data/models/route_model.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/route_repository_provider.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';
 
-class RouteCard extends ConsumerWidget {
+class RouteCard extends ConsumerStatefulWidget {
   final RouteModel route;
   final bool showDeleteButton;
 
@@ -18,8 +18,14 @@ class RouteCard extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    var myItems = route.photoUrls
+  ConsumerState<RouteCard> createState() => _RouteCardState();
+}
+
+class _RouteCardState extends ConsumerState<RouteCard> {
+  int currentIndex = 0;
+  @override
+  Widget build(BuildContext context) {
+    var myItems = widget.route.photoUrls
             ?.map((url) => Container(
                   width: double.infinity,
                   child: Image.network(
@@ -29,15 +35,20 @@ class RouteCard extends ConsumerWidget {
                 ))
             .toList() ??
         [];
-    void toRouteScreen() {
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Myshi(
-              route: route,
-              routeId: route.id,
-            ),
-          ));
+    void toRouteScreen() async {
+      final routeRepository = ref.read(routeRepositoryProvider);
+      final completeRoute =
+          await routeRepository.getRoutesById(id: widget.route.id);
+      if (context.mounted) {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Myshi(
+                route: completeRoute,
+                routeId: completeRoute.id,
+              ),
+            ));
+      }
     }
 
     return Padding(
@@ -59,14 +70,45 @@ class RouteCard extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (route.photoUrls.isNotEmpty)
+              if (widget.route.photoUrls.isNotEmpty)
                 ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: CarouselSlider(
-                        items: myItems,
-                        options: CarouselOptions(autoPlay: false, height: 300)))
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      CarouselSlider(
+                          items: myItems,
+                          options: CarouselOptions(
+                              enableInfiniteScroll: false,
+                              onPageChanged: (index, reason) {
+                                setState(() {
+                                  currentIndex = index;
+                                });
+                              },
+                              viewportFraction: 1.0,
+                              autoPlay: false,
+                              height: 300)),
+                      Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: myItems.length > 1
+                              ? AnimatedSmoothIndicator(
+                                  activeIndex: currentIndex,
+                                  count: myItems.length,
+                                  effect: WormEffect(
+                                      type: WormType.thinUnderground,
+                                      spacing: 3,
+                                      dotHeight: 6,
+                                      dotWidth: 6,
+                                      activeDotColor: Colors.white,
+                                      dotColor: const Color.fromARGB(
+                                          255, 206, 206, 206)),
+                                )
+                              : null)
+                    ],
+                  ),
+                )
               else
                 Container(
                   height: 260,
@@ -96,7 +138,7 @@ class RouteCard extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                route.name,
+                                widget.route.name,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -112,7 +154,7 @@ class RouteCard extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        if (showDeleteButton)
+                        if (widget.showDeleteButton)
                           IconButton(
                             icon: const Icon(
                               Icons.delete_outline,
@@ -136,7 +178,7 @@ class RouteCard extends ConsumerWidget {
                                         try {
                                           await ref
                                               .read(routeRepositoryProvider)
-                                              .deleteRoute(route.id);
+                                              .deleteRoute(widget.route.id);
                                           if (context.mounted) {
                                             Navigator.pop(context);
                                             ref.invalidate(
@@ -175,10 +217,10 @@ class RouteCard extends ConsumerWidget {
                           ),
                       ],
                     ),
-                    if (route.description != null) ...[
+                    if (widget.route.description != null) ...[
                       const SizedBox(height: 8),
                       Text(
-                        route.description!,
+                        widget.route.description!,
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF636E72),

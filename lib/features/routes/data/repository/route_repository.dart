@@ -10,6 +10,10 @@ class RouteRepository {
       {required String userId,
       required String name,
       String? description,
+      String? creatorName,
+      String? creatorPhoto,
+      double? creatorRating,
+      int? creatorRoutsCount,
       String? photoUrl,
       double? longitude,
       String? routeType,
@@ -22,7 +26,11 @@ class RouteRepository {
         'photo_urls': photoUrl,
         'route_type': routeType,
         'longitude': longitude,
-        'latitude': latitude
+        'latitude': latitude,
+        'creator_name': creatorName,
+        'creator_photo': creatorPhoto,
+        'creator_raiting': creatorRating,
+        'creator_routs_count': creatorRoutsCount
       };
       final response =
           await _supabase.from('routes').insert(data).select().single();
@@ -69,11 +77,35 @@ class RouteRepository {
 
   Future<RouteModel> getRoutesById({required String id}) async {
     try {
-      final response =
-          await _supabase.from('routes').select().eq('id', id).single();
-      return RouteModel.fromJson(response);
+      final response = await _supabase
+          .from('routes')
+          .select('''*, creator:user_id(name, avatar_url)''')
+          .eq('id', id)
+          .single();
+      final creator = response['creator'] as Map<String, dynamic>?;
+      print('response: ${response}');
+      print('creator: ${creator}');
+      return RouteModel(
+        id: response['id'] as String,
+        photoUrls: (response['photo_urls'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
+        userId: response['user_id'] as String,
+        name: response['name'] as String? ?? '',
+        description: response['description'] as String? ?? '0',
+        latitude: response['latitude'] as double?,
+        routeType: response['route_type'] as String? ?? '',
+        longitude: response['longitude'] as double?,
+        createdAt: DateTime.parse(response['created_at'] as String),
+        creatorName: creator?['name'] as String?,
+        creatorPhoto: creator?['avatar_url'] as String?,
+        creatorRating: response['creator_rating'] as double?,
+        creatorRoutsCount: response['creator_routes_count'] as int?,
+      );
     } catch (e) {
-      throw 'Невозможно получить данный маршрут';
+      print(e.toString());
+      throw 'ошибка в получении пути';
     }
   }
 
