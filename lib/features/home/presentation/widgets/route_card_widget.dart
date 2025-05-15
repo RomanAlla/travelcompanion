@@ -2,7 +2,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:travelcompanion/features/details_route/presentation/myshi.dart';
+
+import 'package:travelcompanion/features/details_route/presentation/screens/myshi.dart';
 import 'package:travelcompanion/features/routes/data/models/route_model.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/route_repository_provider.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';

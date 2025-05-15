@@ -85,32 +85,7 @@ class DetailsRouteScreen extends StatelessWidget {
                         letterSpacing: -1),
                   ),
                   SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 22),
-                      SizedBox(width: 4),
-                      Text('4.9',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16)),
-                      SizedBox(width: 6),
-                      Text('120 отзывов',
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 15)),
-                      SizedBox(width: 10),
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text('Тропики',
-                            style: TextStyle(
-                                color: Colors.green[900],
-                                fontWeight: FontWeight.w500)),
-                      ),
-                    ],
-                  ),
+                
                   SizedBox(height: 18),
                   _AuthorCard(),
                   SizedBox(height: 18),
@@ -354,12 +329,15 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _InfoIconText(icon: Icons.directions_walk, label: 'Средняя сложность'),
-        _InfoIconText(icon: Icons.calendar_month, label: 'Май-сентябрь'),
-        _InfoIconText(icon: Icons.timer, label: '2-3 дня'),
-        _InfoIconText(icon: Icons.map, label: '45 км'),
+        Expanded(
+            child: _InfoIconText(
+                icon: Icons.directions_walk, label: 'Средняя сложность')),
+        Expanded(
+            child: _InfoIconText(
+                icon: Icons.calendar_month, label: 'Май-сентябрь')),
+        Expanded(child: _InfoIconText(icon: Icons.timer, label: '2-3 дня')),
+        Expanded(child: _InfoIconText(icon: Icons.map, label: '45 км')),
       ],
     );
   }
