@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:travelcompanion/features/routes/data/models/favourite_model.dart';
+import 'package:travelcompanion/features/routes/data/models/interesting_route_points_model.dart';
 import 'package:travelcompanion/features/routes/data/models/route_model.dart';
 
 class RouteRepository {
@@ -13,7 +15,8 @@ class RouteRepository {
       String? creatorName,
       String? creatorPhoto,
       double? creatorRating,
-      int? creatorRoutsCount,
+      int? creatorRoutesCount,
+      List<InterestingRoutePointsModel>? interestingPoints,
       String? photoUrl,
       double? longitude,
       String? routeType,
@@ -29,8 +32,8 @@ class RouteRepository {
         'latitude': latitude,
         'creator_name': creatorName,
         'creator_photo': creatorPhoto,
-        'creator_raiting': creatorRating,
-        'creator_routs_count': creatorRoutsCount
+        'creator_rating': creatorRating,
+        'creator_routes_count': creatorRoutesCount
       };
       final response =
           await _supabase.from('routes').insert(data).select().single();
@@ -41,7 +44,7 @@ class RouteRepository {
       throw 'Ошибка создания маршрута';
     }
   }
-
+ 
   Future<List<RouteModel>> getRoutes() async {
     try {
       final response = await _supabase
@@ -83,8 +86,7 @@ class RouteRepository {
           .eq('id', id)
           .single();
       final creator = response['creator'] as Map<String, dynamic>?;
-      print('response: ${response}');
-      print('creator: ${creator}');
+
       return RouteModel(
         id: response['id'] as String,
         photoUrls: (response['photo_urls'] as List<dynamic>?)
@@ -101,7 +103,7 @@ class RouteRepository {
         creatorName: creator?['name'] as String?,
         creatorPhoto: creator?['avatar_url'] as String?,
         creatorRating: response['creator_rating'] as double?,
-        creatorRoutsCount: response['creator_routes_count'] as int?,
+        creatorRoutesCount: response['creator_routes_count'] as int?,
       );
     } catch (e) {
       print(e.toString());
@@ -163,21 +165,39 @@ class RouteRepository {
     }
   }
 
-  Future<List<RouteModel>> searchRoutes({
-    required String userId,
-    String? query,
-  }) async {
+  Future<List<RouteModel>> searchRoutes(
+      {String? query, required String userId}) async {
     try {
-      var request = _supabase.from('routes').select().eq('user_id', userId);
+      var request = _supabase
+          .from('routes')
+          .select('''*, creator:user_id(name, avatar_url)''');
 
       if (query != null && query.isNotEmpty) {
         request = request.or('name.ilike.%$query%,description.ilike.%$query%');
       }
 
       final response = await request;
-      return (response as List)
-          .map((item) => RouteModel.fromJson(item))
-          .toList();
+      return (response as List).map((item) {
+        final creator = item['creator'] as Map<String, dynamic>?;
+        return RouteModel(
+          id: item['id'] as String,
+          photoUrls: (item['photo_urls'] as List<dynamic>?)
+                  ?.map((e) => e as String)
+                  .toList() ??
+              [],
+          userId: item['user_id'] as String,
+          name: item['name'] as String? ?? '',
+          description: item['description'] as String? ?? '',
+          latitude: item['latitude'] as double?,
+          routeType: item['route_type'] as String? ?? '',
+          longitude: item['longitude'] as double?,
+          createdAt: DateTime.parse(item['created_at'] as String),
+          creatorName: creator?['name'] as String?,
+          creatorPhoto: creator?['avatar_url'] as String?,
+          creatorRating: item['creator_rating'] as double?,
+          creatorRoutesCount: item['creator_routes_count'] as int?,
+        );
+      }).toList();
     } catch (e) {
       throw 'Ошибка поиска маршрутов';
     }

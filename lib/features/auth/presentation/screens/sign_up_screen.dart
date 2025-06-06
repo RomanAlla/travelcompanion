@@ -1,8 +1,11 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:travelcompanion/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelcompanion/features/auth/presentation/screens/sign_in_screen.dart';
+import 'package:travelcompanion/features/auth/presentation/widgets/auth_button_widget.dart';
 
+@RoutePage()
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
 
@@ -10,50 +13,45 @@ class SignUpScreen extends ConsumerStatefulWidget {
   ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends ConsumerState<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _showPassword = false;
-  bool _showConfirmPassword = false;
   String? _error;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _animationController.dispose();
     super.dispose();
-  }
-
-  void _navigateToSignIn() {
-    Navigator.pop(context);
-  }
-
-  bool _isPasswordValid(String password) {
-    return password.length >= 8 &&
-        RegExp(r'[A-Z]').hasMatch(password) &&
-        RegExp(r'[0-9]').hasMatch(password) &&
-        RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password);
-  }
-
-  bool _doPasswordsMatch() {
-    return _passwordController.text == _confirmPasswordController.text &&
-        _passwordController.text.isNotEmpty;
   }
 
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (!_doPasswordsMatch()) {
-        if (mounted) {
-          setState(() {
-            _error = 'Пароли не совпадают';
-          });
-        }
-        return;
-      }
-
       try {
         setState(() {
           _error = null;
@@ -64,13 +62,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               _passwordController.text,
             );
 
-        if (mounted && ref.read(authProvider).user != null) {
-          context.go('/nav-screen');
-        }
+        if (!mounted) return;
+
+        context.router.replacePath('/home');
       } catch (e) {
         if (mounted) {
           setState(() {
-            print(e.toString());
             _error = e.toString();
           });
         }
@@ -80,88 +77,276 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-
+    final _authState = ref.watch(authStateProvider);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.grey[100],
       body: Stack(
         children: [
-          const Positioned(
+          Positioned(
             top: -50,
-            left: -100,
-            child: _BackgroundCircle(
-              width: 250,
-              height: 250,
-              color: Color(0xFF6C5CE7),
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue[700]?.withOpacity(0.1),
+              ),
             ),
           ),
-          const Positioned(
-            bottom: 100,
-            right: -50,
-            child: _BackgroundCircle(
-              width: 150,
-              height: 150,
-              color: Color(0xFFA29BFE),
+          Positioned(
+            bottom: -100,
+            left: -50,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.blue[700]?.withOpacity(0.1),
+              ),
             ),
           ),
           SafeArea(
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 60),
-                      const _LogoSection(),
-                      const SizedBox(height: 40),
-                      const _HeaderSection(),
-                      const SizedBox(height: 16),
-                      const _SubtitleText(),
-                      const SizedBox(height: 40),
-                      _FormSection(
-                        emailController: _emailController,
-                        passwordController: _passwordController,
-                        confirmPasswordController: _confirmPasswordController,
-                        showPassword: _showPassword,
-                        showConfirmPassword: _showConfirmPassword,
-                        onShowPasswordChanged: (value) {
-                          setState(() {
-                            _showPassword = value;
-                          });
-                        },
-                        onShowConfirmPasswordChanged: (value) {
-                          setState(() {
-                            _showConfirmPassword = value;
-                          });
-                        },
-                        isPasswordValid: _isPasswordValid,
-                        doPasswordsMatch: _doPasswordsMatch,
-                      ),
-                      if (_error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Text(
-                            _error!,
-                            style: const TextStyle(
-                              color: Colors.red,
-                              fontSize: 14,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 60),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue[700]!.withOpacity(0.2),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.person_add,
+                              size: 48,
+                              color: Colors.blue[700],
                             ),
                           ),
                         ),
-                      const SizedBox(height: 24),
-                      _SignUpButton(
-                        isLoading: authState.isLoading,
-                        onTap: _signUp,
-                      ),
-                      const SizedBox(height: 24),
-                      _SignInButton(
-                        isLoading: authState.isLoading,
-                        onTap: _navigateToSignIn,
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                        const SizedBox(height: 40),
+                        Text(
+                          'Создайте аккаунт',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[700],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Зарегистрируйтесь, чтобы начать планировать путешествия',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _SocialLoginButton(
+                              icon: Icons.g_mobiledata,
+                              label: 'Google',
+                              onTap: () {},
+                            ),
+                            _SocialLoginButton(
+                              icon: Icons.facebook,
+                              label: 'Facebook',
+                              onTap: () {},
+                            ),
+                            _SocialLoginButton(
+                              icon: Icons.apple,
+                              label: 'Apple',
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: Colors.grey[300])),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: Text(
+                                'или зарегистрируйтесь через email',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: Colors.grey[300])),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              TextFieldWidget(
+                                  labelText: 'Логин',
+                                  hintText: 'Введите логин',
+                                  prefixIcon: const Icon(Icons.email),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Пожалуйста, введите логин';
+                                    }
+                                    return null;
+                                  },
+                                  controller: _emailController,
+                                  obscureText: false),
+                              const Divider(height: 1),
+                              TextFieldWidget(
+                                obscureText: !_isPasswordVisible,
+                                labelText: 'Пароль',
+                                hintText: 'Введите пароль',
+                                isPassword: true,
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                onTogglePasswordVisibility: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Пожалуйста, введите пароль';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Пароль должен содержать минимум 6 символов';
+                                  }
+
+                                  return null;
+                                },
+                                controller: _passwordController,
+                              ),
+                              const Divider(height: 1),
+                              TextFieldWidget(
+                                obscureText: !_isConfirmPasswordVisible,
+                                labelText: 'Подтвердите пароль',
+                                hintText: 'Подтвердите пароль',
+                                isPassword: true,
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                onTogglePasswordVisibility: () {
+                                  setState(() {
+                                    _isConfirmPasswordVisible =
+                                        !_isConfirmPasswordVisible;
+                                  });
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Пожалуйста, введите пароль';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Пароль должен содержать минимум 6 символов';
+                                  }
+                                  return null;
+                                },
+                                controller: _confirmPasswordController,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.red[50],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline,
+                                    color: Colors.red[700], size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _error!,
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Icon(Icons.check_circle_outline,
+                                color: Colors.blue[700], size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Регистрируясь, вы соглашаетесь с нашими условиями использования и политикой конфиденциальности',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        AuthButtonWidget(
+                          onPressed: _signUp,
+                          text: 'Зарегистрироваться',
+                          isLoading: _authState.isLoading,
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Уже есть аккаунт?',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: Text(
+                                'Войти',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -173,572 +358,48 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 }
 
-class _BackgroundCircle extends StatelessWidget {
-  final double width;
-  final double height;
-  final Color color;
+class _SocialLoginButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-  const _BackgroundCircle({
-    required this.width,
-    required this.height,
-    required this.color,
+  const _SocialLoginButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color.withOpacity(0.1),
-      ),
-    );
-  }
-}
-
-class _LogoSection extends StatelessWidget {
-  const _LogoSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6C5CE7).withOpacity(0.2),
-                  blurRadius: 30,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.travel_explore,
-              size: 48,
-              color: Color(0xFF6C5CE7),
-            ),
-          ),
-          const Positioned(
-            right: 0,
-            bottom: 0,
-            child: _SmallCircle(
-              icon: Icons.person_add,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SmallCircle extends StatelessWidget {
-  final IconData icon;
-
-  const _SmallCircle({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: const BoxDecoration(
-        color: Color(0xFFA29BFE),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: Colors.white,
-      ),
-    );
-  }
-}
-
-class _HeaderSection extends StatelessWidget {
-  const _HeaderSection();
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Создать аккаунт',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2D3436),
-                height: 1.2,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFF6C5CE7),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-      ],
-    );
-  }
-}
-
-class _SubtitleText extends StatelessWidget {
-  const _SubtitleText();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'Зарегистрируйтесь, чтобы начать планировать путешествия',
-      style: TextStyle(
-        fontSize: 16,
-        color: Color(0xFF636E72),
-        height: 1.5,
-      ),
-    );
-  }
-}
-
-class _FormSection extends StatelessWidget {
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-  final TextEditingController confirmPasswordController;
-  final bool showPassword;
-  final bool showConfirmPassword;
-  final Function(bool) onShowPasswordChanged;
-  final Function(bool) onShowConfirmPasswordChanged;
-  final bool Function(String) isPasswordValid;
-  final bool Function() doPasswordsMatch;
-
-  const _FormSection({
-    required this.emailController,
-    required this.passwordController,
-    required this.confirmPasswordController,
-    required this.showPassword,
-    required this.showConfirmPassword,
-    required this.onShowPasswordChanged,
-    required this.onShowConfirmPasswordChanged,
-    required this.isPasswordValid,
-    required this.doPasswordsMatch,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _FormHeader(),
-          const SizedBox(height: 24),
-          _EmailField(controller: emailController),
-          const SizedBox(height: 16),
-          _PasswordField(
-            controller: passwordController,
-            showPassword: showPassword,
-            onShowPasswordChanged: onShowPasswordChanged,
-            isPasswordValid: isPasswordValid,
-          ),
-          if (passwordController.text.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8, left: 16),
-              child: _PasswordRequirements(password: passwordController.text),
-            ),
-          const SizedBox(height: 16),
-          _ConfirmPasswordField(
-            controller: confirmPasswordController,
-            showPassword: showConfirmPassword,
-            onShowPasswordChanged: onShowConfirmPasswordChanged,
-            doPasswordsMatch: doPasswordsMatch,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FormHeader extends StatelessWidget {
-  const _FormHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF6C5CE7).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Icon(
-            Icons.person_add,
-            size: 20,
-            color: Color(0xFF6C5CE7),
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Text(
-          'Регистрация',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3436),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EmailField extends StatelessWidget {
-  final TextEditingController controller;
-
-  const _EmailField({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      decoration: const InputDecoration(
-        labelText: 'Email',
-        labelStyle: TextStyle(color: Color(0xFF636E72)),
-        prefixIcon: Icon(
-          Icons.email_outlined,
-          color: Color(0xFF636E72),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: Color(0xFFF8F9FA),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите email';
-        }
-        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-          return 'Некорректный email';
-        }
-        return null;
-      },
-    );
-  }
-}
-
-class _PasswordField extends StatelessWidget {
-  final TextEditingController controller;
-  final bool showPassword;
-  final Function(bool) onShowPasswordChanged;
-  final bool Function(String) isPasswordValid;
-
-  const _PasswordField({
-    required this.controller,
-    required this.showPassword,
-    required this.onShowPasswordChanged,
-    required this.isPasswordValid,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: !showPassword,
-      decoration: InputDecoration(
-        labelText: 'Пароль',
-        labelStyle: const TextStyle(color: Color(0xFF636E72)),
-        prefixIcon: const Icon(
-          Icons.lock_outline,
-          color: Color(0xFF636E72),
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            showPassword ? Icons.visibility : Icons.visibility_off,
-            color: const Color(0xFF636E72),
-          ),
-          onPressed: () => onShowPasswordChanged(!showPassword),
-        ),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8F9FA),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите пароль';
-        }
-        if (!isPasswordValid(value)) {
-          return 'Пароль не соответствует требованиям';
-        }
-        return null;
-      },
-    );
-  }
-}
-
-class _PasswordRequirements extends StatelessWidget {
-  final String password;
-
-  const _PasswordRequirements({required this.password});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _PasswordRequirementItem(
-          'Минимум 8 символов',
-          password.length >= 8,
-        ),
-        _PasswordRequirementItem(
-          'Заглавная буква',
-          RegExp(r'[A-Z]').hasMatch(password),
-        ),
-        _PasswordRequirementItem(
-          'Цифра',
-          RegExp(r'[0-9]').hasMatch(password),
-        ),
-        _PasswordRequirementItem(
-          'Специальный символ',
-          RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password),
-        ),
-      ],
-    );
-  }
-}
-
-class _PasswordRequirementItem extends StatelessWidget {
-  final String text;
-  final bool isMet;
-
-  const _PasswordRequirementItem(this.text, this.isMet);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        children: [
-          Icon(
-            isMet ? Icons.check_circle : Icons.cancel,
-            size: 16,
-            color: isMet ? Colors.green : Colors.red,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: TextStyle(
-              color: isMet ? Colors.green : Colors.red,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ConfirmPasswordField extends StatelessWidget {
-  final TextEditingController controller;
-  final bool showPassword;
-  final Function(bool) onShowPasswordChanged;
-  final bool Function() doPasswordsMatch;
-
-  const _ConfirmPasswordField({
-    required this.controller,
-    required this.showPassword,
-    required this.onShowPasswordChanged,
-    required this.doPasswordsMatch,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: !showPassword,
-      decoration: InputDecoration(
-        labelText: 'Подтвердите пароль',
-        labelStyle: const TextStyle(color: Color(0xFF636E72)),
-        prefixIcon: const Icon(
-          Icons.lock_outline,
-          color: Color(0xFF636E72),
-        ),
-        suffixIcon: Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (controller.text.isNotEmpty)
-              Icon(
-                doPasswordsMatch() ? Icons.check_circle : Icons.error,
-                color: doPasswordsMatch() ? Colors.green : Colors.red,
+            Icon(icon, color: Colors.blue[700], size: 24),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.blue[700],
+                fontWeight: FontWeight.w500,
               ),
-            IconButton(
-              icon: Icon(
-                showPassword ? Icons.visibility : Icons.visibility_off,
-                color: const Color(0xFF636E72),
-              ),
-              onPressed: () => onShowPasswordChanged(!showPassword),
             ),
           ],
-        ),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
-          borderSide: BorderSide.none,
-        ),
-        filled: true,
-        fillColor: const Color(0xFFF8F9FA),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Подтвердите пароль';
-        }
-        if (!doPasswordsMatch()) {
-          return 'Пароли не совпадают';
-        }
-        return null;
-      },
-    );
-  }
-}
-
-class _SignUpButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _SignUpButton({
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6C5CE7).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: isLoading ? null : onTap,
-          child: Center(
-            child: isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Зарегистрироваться',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SignInButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onTap;
-
-  const _SignInButton({
-    required this.isLoading,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: isLoading ? null : onTap,
-          child: Center(
-            child: Text(
-              'Уже есть аккаунт? Войти',
-              style: TextStyle(
-                color: Theme.of(context).primaryColor,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ),
       ),
     );

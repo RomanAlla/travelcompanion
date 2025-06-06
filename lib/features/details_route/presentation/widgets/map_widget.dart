@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:travelcompanion/features/details_route/presentation/screens/selected_point_on_watch_mode_screen.dart';
-import 'package:travelcompanion/features/routes/presentation/screens/select_point_on_map_screen.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
 class MapWidget extends StatelessWidget {

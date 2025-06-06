@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:travelcompanion/features/routes/data/models/route_model.dart';
 
 class RouteCreatorInfoWidget extends StatelessWidget {
   final String creatorName;
-  const RouteCreatorInfoWidget({super.key, required this.creatorName});
+  final RouteModel route;
+  const RouteCreatorInfoWidget(
+      {super.key, required this.creatorName, required this.route});
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +18,17 @@ class RouteCreatorInfoWidget extends StatelessWidget {
         child: Row(
           children: [
             CircleAvatar(
-              radius: 35,
-            ),
+                radius: 35,
+                backgroundImage: route.creatorPhoto != null
+                    ? NetworkImage(route.creatorPhoto!)
+                    : null,
+                child: route.creatorPhoto == null
+                    ? CircleAvatar(
+                        radius: 35,
+                        backgroundColor: Colors.blue[100],
+                        child: Icon(Icons.person, color: Colors.blue[700]),
+                      )
+                    : null),
             SizedBox(
               width: 20,
             ),

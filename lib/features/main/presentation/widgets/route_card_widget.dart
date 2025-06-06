@@ -2,8 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-
-import 'package:travelcompanion/features/details_route/presentation/screens/myshi.dart';
+import 'package:travelcompanion/features/details_route/presentation/screens/route_description_screen.dart';
 import 'package:travelcompanion/features/routes/data/models/route_model.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/route_repository_provider.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';
@@ -23,6 +22,22 @@ class RouteCard extends ConsumerStatefulWidget {
 }
 
 class _RouteCardState extends ConsumerState<RouteCard> {
+  void toRouteScreen() async {
+    final routeRepository = ref.read(routeRepositoryProvider);
+    final completeRoute =
+        await routeRepository.getRoutesById(id: widget.route.id);
+    if (context.mounted) {
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RouteDescriptionScreen(
+              route: completeRoute,
+              routeId: completeRoute.id,
+            ),
+          ));
+    }
+  }
+
   int currentIndex = 0;
   @override
   Widget build(BuildContext context) {
@@ -36,21 +51,6 @@ class _RouteCardState extends ConsumerState<RouteCard> {
                 ))
             .toList() ??
         [];
-    void toRouteScreen() async {
-      final routeRepository = ref.read(routeRepositoryProvider);
-      final completeRoute =
-          await routeRepository.getRoutesById(id: widget.route.id);
-      if (context.mounted) {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Myshi(
-                route: completeRoute,
-                routeId: completeRoute.id,
-              ),
-            ));
-      }
-    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),

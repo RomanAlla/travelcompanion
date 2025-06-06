@@ -1,22 +1,50 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:travelcompanion/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelcompanion/features/routes/data/models/route_model.dart';
+import 'package:travelcompanion/features/routes/presentation/providers/favourite_repository_provider.dart';
 
 class CarouselSliderWidget extends StatefulWidget {
   final List<Widget> items;
   final int count;
   int activeIndex;
+  final RouteModel route;
+  final WidgetRef ref;
   CarouselSliderWidget(
       {super.key,
       required this.items,
       required this.count,
-      required this.activeIndex});
+      required this.activeIndex,
+      required this.route,
+      required this.ref});
 
   @override
   State<CarouselSliderWidget> createState() => _CarouselSliderWidgetState();
 }
 
 class _CarouselSliderWidgetState extends State<CarouselSliderWidget> {
+  Future<void> addToFavouriteRoute() async {
+    try {
+      final rep = widget.ref.read(favouriteRepository);
+      final user = widget.ref.watch(authProvider).user;
+      await rep.addToFavourite(userId: user!.id, routeId: widget.route.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Маршрут добавлен в избранное')),
+        );
+      }
+    } catch (e) {
+      print(e.toString());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -80,7 +108,7 @@ class _CarouselSliderWidgetState extends State<CarouselSliderWidget> {
                       Icons.arrow_back,
                       color: Colors.black,
                     ),
-                    onPressed: () {},
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
                 Row(
@@ -99,7 +127,7 @@ class _CarouselSliderWidgetState extends State<CarouselSliderWidget> {
                           Icons.favorite_border,
                           color: Colors.red,
                         ),
-                        onPressed: () {},
+                        onPressed: addToFavouriteRoute,
                       ),
                     ),
                     SizedBox(width: 8),

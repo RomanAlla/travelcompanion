@@ -26,11 +26,7 @@ class ProfilePhotoWidget extends ConsumerWidget {
               ? const Icon(Icons.person, size: 50)
               : null,
           onBackgroundImageError: (exception, stackTrace) {
-            print('Error loading image: $exception');
-            print('Stack trace: $stackTrace');
-            print('Attempted URL: ${user?.avatarUrl}');
 
-            // Если изображение не загружается, обновляем профиль, удаляя неверный URL
             if (user?.avatarUrl != null) {
               ref.read(authProvider.notifier).updateProfile(
                     userId: user!.id,

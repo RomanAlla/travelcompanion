@@ -1,15 +1,18 @@
 import 'dart:io';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:travelcompanion/core/router/router.dart';
 import 'package:travelcompanion/features/auth/presentation/providers/auth_provider.dart';
+import 'package:travelcompanion/features/routes/data/models/interesting_point_model.dart';
+import 'package:travelcompanion/features/routes/presentation/providers/interesting_route_points_repository_provider.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/map_state.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/route_repository_provider.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';
-import 'package:travelcompanion/features/user_routes/presentation/user_routes.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
-import 'package:travelcompanion/features/routes/presentation/screens/select_point_on_map_screen.dart';
 
+@RoutePage()
 class CreateRouteScreen extends ConsumerStatefulWidget {
   const CreateRouteScreen({Key? key}) : super(key: key);
 
@@ -24,7 +27,6 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _routeType;
-  Color _selectedColor = const Color(0xFF6C5CE7);
   List<String> _coverImagePaths = [];
   Point? _selectedPoint;
 
@@ -34,6 +36,8 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
     "Пещеры",
     "Особые",
   ];
+
+  final List<Map<String, dynamic>> _routePoints = [];
 
   Future<void> _pickDate({required bool isStart}) async {
     final now = DateTime.now();
@@ -98,13 +102,21 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
             .read(routeRepositoryProvider)
             .updateRoutePhotos(id: route.id, files: files);
       }
-
+      if (_routePoints.isNotEmpty) {
+        final intRep = ref.read(interestingRoutePointsModelProvider);
+        for (var point in _routePoints) {
+          await intRep.createPoint(
+              routeId: route.id,
+              name: point['name'],
+              description: point['description'],
+              latitude: point['point'].latitude,
+              longitude: point['point'].longitude);
+        }
+      }
       if (mounted) {
         ref.invalidate(routesListProvider);
         ref.invalidate(userRoutesListProvider);
-        Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => UserRoutesScreen(),
-        ));
+        context.router.pushPath('user-routes');
       }
     } catch (e) {
       if (mounted) {
@@ -131,10 +143,10 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(
+        title: const Text(
           'Создать маршрут',
           style: TextStyle(
             color: Colors.black87,
@@ -149,7 +161,6 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              // Обложка маршрута
               Center(
                 child: GestureDetector(
                   onTap: _pickImages,
@@ -208,7 +219,6 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Основная информация
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -225,7 +235,7 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Основная информация',
                       style: TextStyle(
                         fontSize: 18,
@@ -238,12 +248,12 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Название маршрута',
-                        prefixIcon: Icon(Icons.edit_location_alt_rounded,
-                            color: Color(0xFF6C5CE7)),
+                        prefixIcon: const Icon(Icons.edit_location_alt_rounded,
+                            color: Colors.black87),
                         filled: true,
                         fillColor: Colors.grey[50],
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 15, horizontal: 16),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -257,8 +267,8 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                       onEditingComplete: () => FocusScope.of(context).unfocus(),
                       decoration: InputDecoration(
                         labelText: 'Описание маршрута',
-                        prefixIcon:
-                            Icon(Icons.notes_rounded, color: Color(0xFF6C5CE7)),
+                        prefixIcon: const Icon(Icons.notes_rounded,
+                            color: Colors.black87),
                         filled: true,
                         fillColor: Colors.grey[50],
                         border: OutlineInputBorder(
@@ -272,7 +282,6 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Даты и тип
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -289,7 +298,7 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Даты и тип',
                       style: TextStyle(
                         fontSize: 18,
@@ -312,8 +321,8 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.calendar_today,
-                                      color: Color(0xFF6C5CE7), size: 20),
+                                  const Icon(Icons.calendar_today,
+                                      color: Colors.black87, size: 20),
                                   const SizedBox(width: 8),
                                   Text(
                                     _startDate != null
@@ -344,8 +353,8 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.calendar_today,
-                                      color: Color(0xFF6C5CE7), size: 20),
+                                  const Icon(Icons.calendar_today,
+                                      color: Colors.black87, size: 20),
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
@@ -381,7 +390,7 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                           dropdownColor: Colors.white,
                           value: _routeType,
                           isExpanded: true,
-                          hint: Text('Тип местности маршрута'),
+                          hint: const Text('Тип местности маршрута'),
                           items: _routeTypes
                               .map((type) => DropdownMenuItem(
                                     value: type,
@@ -396,9 +405,48 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Теги и цвет
-
-              // Карта
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: pointAndTipsContainer(
+                  context,
+                  'Интересные точки',
+                  Icons.location_on,
+                  'Добавьте интересные точки маршрута',
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: pointAndTipsContainer(
+                  context,
+                  'Советы',
+                  Icons.light,
+                  'Добавьте советы путешественникам, чтобы им было легче',
+                ),
+              ),
+              const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -415,7 +463,7 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Точка на карте',
                       style: TextStyle(
                         fontSize: 18,
@@ -438,15 +486,11 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: () async {
-                        final result = await Navigator.of(context).push<Point>(
-                          MaterialPageRoute(
-                            builder: (_) => SelectPointOnMapScreen(
-                              initialPoint: state.placemarks.isNotEmpty
-                                  ? state.placemarks.last.point
-                                  : null,
-                            ),
-                          ),
-                        );
+                        final result = await context.router.push<Point>(
+                            SelectRoutePosOnMapRoute(
+                                initialPoint: state.placemarks.isNotEmpty
+                                    ? state.placemarks.last.point
+                                    : null));
                         if (result != null) {
                           ref
                               .read(mapControllerProvider.notifier)
@@ -507,12 +551,11 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Кнопка сохранения
               Container(
                 width: double.infinity,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [Color(0xFF6C5CE7), Color(0xFFA29BFE)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
@@ -531,13 +574,13 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: createRoute,
-                    child: Center(
+                    child: const Center(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.check_circle_outline,
                               color: Colors.white, size: 24),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             'Сохранить маршрут',
                             style: TextStyle(
@@ -558,5 +601,220 @@ class _CreateRouteScreenState extends ConsumerState<CreateRouteScreen> {
         ),
       ),
     );
+  }
+
+  Widget pointAndTipsContainer(
+      BuildContext context, String title, IconData icon, String text) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () async {
+                final pointDetails = await context.router
+                    .pushPath<InterestingPointModel?>('point-selection');
+
+                if (pointDetails != null && context.mounted) {
+                  setState(() {
+                    _routePoints.add({
+                      'name': pointDetails.name,
+                      'description': pointDetails.description,
+                      'point': pointDetails.point,
+                    });
+                  });
+                }
+              },
+              icon: const Icon(Icons.add, color: Colors.black87),
+              label: const Text(
+                'Добавить',
+                style: TextStyle(color: Colors.black87),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (_routePoints.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  Icon(icon, size: 48, color: Colors.grey[400]),
+                  const SizedBox(height: 8),
+                  Text(
+                    textAlign: TextAlign.center,
+                    text,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _routePoints.length,
+            itemBuilder: (context, index) {
+              final point = _routePoints[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF6C5CE7).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: Colors.black87),
+                  ),
+                  title: Text(
+                    point['name'],
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: Text(
+                    point['description'],
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 14,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.black87),
+                        onPressed: () => _showEditPointDialog(index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _deletePoint(index),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  void _showEditPointDialog(int index) {
+    final point = _routePoints[index];
+    final nameController = TextEditingController(text: point['name']);
+    final descriptionController =
+        TextEditingController(text: point['description']);
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Редактировать точку',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Название',
+                  prefixIcon: Icon(Icons.title, color: Colors.black87),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Описание',
+                  prefixIcon: Icon(Icons.description, color: Colors.black87),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Отмена'),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (nameController.text.isNotEmpty) {
+                        setState(() {
+                          _routePoints[index] = {
+                            ...point,
+                            'name': nameController.text,
+                            'description': descriptionController.text,
+                          };
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF6C5CE7),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text('Сохранить'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _deletePoint(int index) {
+    setState(() {
+      _routePoints.removeAt(index);
+    });
   }
 }

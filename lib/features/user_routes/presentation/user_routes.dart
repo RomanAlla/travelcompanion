@@ -1,10 +1,10 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import 'package:travelcompanion/features/home/presentation/widgets/route_card_widget.dart';
+import 'package:travelcompanion/features/main/presentation/widgets/route_card_widget.dart';
 import 'package:travelcompanion/features/routes/presentation/providers/routes_list_provider.dart';
 
+@RoutePage()
 class UserRoutesScreen extends ConsumerWidget {
   const UserRoutesScreen({Key? key}) : super(key: key);
 
@@ -34,10 +34,9 @@ class UserRoutesScreen extends ConsumerWidget {
                   child: Row(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.arrow_back,
-                            color: Color(0xFF2D3436)),
-                        onPressed: () => context.pop(),
-                      ),
+                          icon: const Icon(Icons.arrow_back,
+                              color: Color(0xFF2D3436)),
+                          onPressed: () => Navigator.of(context).pop()),
                       const SizedBox(width: 16),
                       const Text(
                         'Мои путешествия',
@@ -92,7 +91,7 @@ class UserRoutesScreen extends ConsumerWidget {
                               const SizedBox(height: 32),
                               ElevatedButton(
                                 onPressed: () {
-                                  context.push('/create-route');
+                                  context.router.pushPath('create-route');
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF6C5CE7),
@@ -163,7 +162,7 @@ class UserRoutesScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/create-route');
+          context.router.pushPath('create-route');
         },
         backgroundColor: const Color(0xFF6C5CE7),
         child: const Icon(Icons.add, color: Colors.white),

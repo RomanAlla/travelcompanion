@@ -11,13 +11,13 @@ class RouteModel {
   final String? creatorName;
   final String? creatorPhoto;
   final double? creatorRating;
-  final int? creatorRoutsCount;
+  final int? creatorRoutesCount;
 
   RouteModel({
     this.creatorName,
     this.creatorPhoto,
     this.creatorRating,
-    this.creatorRoutsCount,
+    this.creatorRoutesCount,
     required this.id,
     required this.userId,
     required this.name,
@@ -43,7 +43,7 @@ class RouteModel {
       'creator_name': creatorName,
       'creator_photo': creatorPhoto,
       'creator_raiting': creatorRating,
-      'creator_routs_count': creatorRoutsCount
+      'creator_routes_count': creatorRoutesCount
     };
   }
 
@@ -65,7 +65,7 @@ class RouteModel {
       creatorName: creator?['name'] as String?,
       creatorPhoto: creator?['avatar_url'] as String?,
       creatorRating: json['creator_rating'] as double?,
-      creatorRoutsCount: json['creator_routes_count'] as int?,
+      creatorRoutesCount: json['creator_routes_count'] as int?,
     );
   }
 }

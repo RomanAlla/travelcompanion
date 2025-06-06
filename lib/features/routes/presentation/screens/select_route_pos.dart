@@ -1,16 +1,20 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 
-class SelectPointOnMapScreen extends StatefulWidget {
+@RoutePage()
+class SelectRoutePosOnMapScreen extends StatefulWidget {
   final Point? initialPoint;
 
-  const SelectPointOnMapScreen({Key? key, this.initialPoint}) : super(key: key);
+  const SelectRoutePosOnMapScreen({Key? key, this.initialPoint})
+      : super(key: key);
 
   @override
-  State<SelectPointOnMapScreen> createState() => _SelectPointOnMapScreenState();
+  State<SelectRoutePosOnMapScreen> createState() =>
+      _SelectRoutePosOnMapScreenState();
 }
 
-class _SelectPointOnMapScreenState extends State<SelectPointOnMapScreen> {
+class _SelectRoutePosOnMapScreenState extends State<SelectRoutePosOnMapScreen> {
   late YandexMapController _mapController;
   Point? _selectedPoint;
 
@@ -39,7 +43,7 @@ class _SelectPointOnMapScreenState extends State<SelectPointOnMapScreen> {
             ? []
             : [
                 PlacemarkMapObject(
-                  mapId: MapObjectId('selected_point'),
+                  mapId: const MapObjectId('selected_point'),
                   point: _selectedPoint!,
                   icon: PlacemarkIcon.single(
                     PlacemarkIconStyle(
